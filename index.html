@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orquestraio — Múltiplos gateways. Uma única API.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* =================== VARIABLES =================== */
+:root {
+  --bg:           #050505;
+  --bg-alt:       #0a0a0a;
+  --bg-surface:   #111111;
+  --bg-surface2:  #1a1a1a;
+  --border:       rgba(255,255,255,0.08);
+  --border-2:     rgba(255,255,255,0.14);
+  --border-3:     rgba(255,255,255,0.22);
+  --brand:        #8b5cf6;
+  --brand-dark:   #7c3aed;
+  --brand-glow:   rgba(139,92,246,0.4);
+  --brand-faint:  rgba(139,92,246,0.07);
+  --brand-faint2: rgba(139,92,246,0.14);
+  --text:         #ededed;
+  --text-2:       #a0a0a0;
+  --text-3:       #555;
+  --red:          #f87171;
+  --amber:        #fbbf24;
+  --blue:         #60a5fa;
+  --emerald:      #34d399;
+  --purple:       #a78bfa;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius:    6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+}
+
+/* =================== BASE =================== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{
+  background:var(--bg);
+  color:var(--text-2);
+  font-family:var(--font-sans);
+  font-size:14px;
+  line-height:1.75;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--brand);text-decoration:none;}
+a:hover{text-decoration:underline;}
+code{
+  font-family:var(--font-mono);font-size:0.82em;
+  background:rgba(255,255,255,0.07);border:1px solid var(--border);
+  padding:0.1em 0.38em;border-radius:4px;color:var(--text);
+}
+
+/* =================== NOISE OVERLAY =================== */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:0.6;
+}
+
+/* =================== NAV =================== */
+nav{
+  position:fixed;top:0;left:0;right:0;
+  height:60px;
+  background:rgba(5,5,5,0.92);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+  z-index:200;
+}
+.nav-inner{
+  max-width:1200px;margin:0 auto;
+  display:flex;align-items:center;
+  height:100%;padding:0 1.5rem;gap:0;
+}
+.nav-logo{
+  display:flex;align-items:center;gap:0.5rem;
+  text-decoration:none;flex-shrink:0;margin-right:1.5rem;
+}
+.nav-logo:hover{text-decoration:none;}
+.nav-logo-mark{
+  width:28px;height:28px;
+  background:var(--brand);
+  border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+}
+.nav-logo-mark svg{width:15px;height:15px;}
+.nav-logo-text{font-family:var(--font-mono);font-weight:700;font-size:0.9rem;color:var(--text);letter-spacing:0.03em;}
+.nav-logo-version{font-family:var(--font-mono);font-size:0.6rem;color:var(--text-3);border:1px solid var(--border);padding:0.05rem 0.35rem;border-radius:4px;margin-left:0.15rem;}
+
+/* Main nav links row */
+.nav-links{display:flex;align-items:center;gap:0;height:60px;}
+
+/* Each nav item wrapper (for dropdown positioning) */
+.nav-item{position:relative;height:60px;display:flex;align-items:center;}
+
+/* Trigger button / plain link */
+.nav-trigger{
+  display:flex;align-items:center;gap:0.28rem;
+  padding:0.3rem 0.7rem;
+  color:var(--text-2);font-size:0.84rem;
+  background:none;border:none;cursor:pointer;
+  font-family:var(--font-sans);
+  border-radius:var(--radius);
+  transition:color 0.15s;
+  white-space:nowrap;
+  text-decoration:none;
+}
+.nav-trigger:hover,.nav-item.open .nav-trigger{color:var(--text);text-decoration:none;}
+.nav-trigger svg{width:11px;height:11px;flex-shrink:0;transition:transform 0.2s ease;color:var(--text-3);}
+.nav-item.open .nav-trigger svg{transform:rotate(180deg);color:var(--brand);}
+.nav-item.open .nav-trigger{color:var(--brand);}
+
+/* Bottom indicator line when open */
+.nav-item.open::after{
+  content:'';
+  position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:calc(100% - 1rem);height:1px;
+  background:var(--brand);
+}
+
+/* ── MEGA DROPDOWN ── */
+.mega-wrap{
+  position:fixed;
+  top:60px;left:0;right:0;
+  background:rgba(8,8,8,0.98);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  z-index:199;
+  /* hidden state */
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(-6px);
+  transition:opacity 0.18s ease, transform 0.18s ease;
+}
+.mega-wrap.open{
+  opacity:1;
+  pointer-events:all;
+  transform:translateY(0);
+}
+.mega-inner{
+  max-width:1200px;margin:0 auto;
+  padding:1.75rem 1.5rem;
+  display:grid;gap:0;
+}
+
+/* Layout variations */
+.mega-inner.cols-3{grid-template-columns:1fr 1fr 1fr;}
+.mega-inner.cols-2{grid-template-columns:1fr 1fr;}
+
+/* Column dividers */
+.mega-col{
+  padding:0 2rem;
+  border-right:1px solid var(--border);
+}
+.mega-col:first-child{padding-left:0;}
+.mega-col:last-child{border-right:none;padding-right:0;}
+
+/* Column label */
+.mega-col-label{
+  font-family:var(--font-mono);font-size:0.6rem;
+  text-transform:uppercase;letter-spacing:0.12em;
+  color:var(--text-3);font-weight:600;
+  margin-bottom:0.875rem;
+  display:flex;align-items:center;gap:0.4rem;
+}
+.mega-col-label a{
+  color:var(--text-3);text-decoration:none;
+  display:flex;align-items:center;gap:0.25rem;
+}
+.mega-col-label a:hover{color:var(--brand);}
+.mega-col-label a svg{width:10px;height:10px;}
+
+/* Mega menu items */
+.mega-item{
+  display:flex;align-items:flex-start;gap:0.75rem;
+  padding:0.55rem 0.6rem;
+  border-radius:var(--radius-md);
+  text-decoration:none;
+  color:var(--text-2);
+  transition:background 0.12s, color 0.12s;
+  margin-bottom:0.1rem;
+}
+.mega-item:hover{background:rgba(255,255,255,0.04);color:var(--text);text-decoration:none;}
+.mega-item-icon{
+  width:32px;height:32px;flex-shrink:0;
+  background:var(--bg-surface);border:1px solid var(--border);
+  border-radius:var(--radius);
+  display:flex;align-items:center;justify-content:center;
+  margin-top:1px;
+}
+.mega-item-icon svg{width:14px;height:14px;color:var(--text-3);}
+.mega-item:hover .mega-item-icon{border-color:var(--border-2);}
+.mega-item:hover .mega-item-icon svg{color:var(--brand);}
+.mega-item-body{}
+.mega-item-title{font-size:0.84rem;font-weight:500;color:var(--text);line-height:1.3;margin-bottom:0.15rem;}
+.mega-item-desc{font-size:0.74rem;color:var(--text-3);line-height:1.4;}
+
+/* Featured post card inside mega */
+.mega-post{
+  display:block;padding:0.75rem 0.875rem;
+  border:1px solid var(--border);border-radius:var(--radius-lg);
+  text-decoration:none;
+  transition:border-color 0.15s, background 0.15s;
+  margin-bottom:0.6rem;
+}
+.mega-post:hover{border-color:var(--border-2);background:rgba(255,255,255,0.02);text-decoration:none;}
+.mega-post-title{font-size:0.84rem;font-weight:600;color:var(--text);margin-bottom:0.25rem;line-height:1.4;}
+.mega-post-desc{font-size:0.74rem;color:var(--text-3);line-height:1.5;}
+
+/* right nav side */
+.nav-right{display:flex;align-items:center;gap:0.5rem;margin-left:auto;}
+.nav-btn-outline{
+  padding:0.3rem 0.9rem;border:1px solid var(--border-2);
+  border-radius:var(--radius);font-size:0.82rem;color:var(--text-2);
+  background:none;cursor:pointer;transition:all 0.15s;font-family:var(--font-sans);
+  text-decoration:none;display:inline-flex;align-items:center;
+}
+.nav-btn-outline:hover{border-color:var(--border-3);color:var(--text);background:var(--bg-surface);text-decoration:none;}
+.nav-btn-brand{
+  padding:0.3rem 0.9rem;border:1px solid var(--brand);
+  border-radius:var(--radius);font-size:0.82rem;color:#fff;
+  background:var(--brand);cursor:pointer;transition:all 0.15s;font-family:var(--font-sans);font-weight:600;
+  text-decoration:none;display:inline-flex;align-items:center;
+}
+.nav-btn-brand:hover{background:var(--brand-dark);border-color:var(--brand-dark);transform:translateY(-1px);text-decoration:none;}
+
+/* backdrop to close menus */
+.nav-backdrop{
+  position:fixed;inset:0;top:60px;
+  z-index:198;
+  display:none;
+}
+.nav-backdrop.show{display:block;}
+
+/* Mobile hamburger */
+.nav-hamburger{
+  display:none;margin-left:auto;
+  width:34px;height:34px;
+  border:1px solid var(--border);border-radius:var(--radius);
+  background:none;color:var(--text-2);cursor:pointer;
+  align-items:center;justify-content:center;
+}
+.nav-hamburger svg{width:16px;height:16px;}
+@media(max-width:900px){
+  .nav-links,.nav-right .nav-btn-outline{display:none;}
+  .nav-hamburger{display:flex;}
+}
+
+/* =================== HERO =================== */
+.hero{
+  padding:140px 1.5rem 80px;
+  text-align:center;
+  position:relative;
+  z-index:1;
+  overflow:hidden;
+}
+/* Radial glow behind hero */
+.hero::before{
+  content:'';
+  position:absolute;
+  top:40px;left:50%;
+  transform:translateX(-50%);
+  width:900px;height:500px;
+  background:radial-gradient(ellipse at center, rgba(139,92,246,0.13) 0%, transparent 70%);
+  pointer-events:none;
+}
+.hero-inner{max-width:780px;margin:0 auto;position:relative;}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  border:1px solid rgba(139,92,246,0.3);
+  background:rgba(139,92,246,0.07);
+  border-radius:100px;padding:0.25rem 0.85rem;
+  font-family:var(--font-mono);font-size:0.65rem;color:var(--purple);
+  letter-spacing:0.05em;text-transform:uppercase;
+  margin-bottom:1.75rem;
+}
+.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--brand);box-shadow:0 0 6px var(--brand);animation:pulse 2s ease infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(0.85)}}
+.hero-title{
+  font-size:clamp(2.5rem,5vw,4rem);
+  font-weight:800;color:var(--text);
+  letter-spacing:-0.04em;line-height:1.08;
+  margin-bottom:1.25rem;
+}
+.hero-title .accent{
+  background:linear-gradient(135deg,#8b5cf6,#a78bfa,#c4b5fd);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero-sub{
+  font-size:1.05rem;color:var(--text-2);
+  line-height:1.75;margin-bottom:2.5rem;max-width:560px;margin-left:auto;margin-right:auto;
+}
+.hero-actions{display:flex;align-items:center;justify-content:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:3rem;}
+.btn{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  padding:0.6rem 1.3rem;border-radius:var(--radius-md);
+  font-size:0.875rem;font-weight:600;font-family:var(--font-sans);
+  text-decoration:none;cursor:pointer;transition:all 0.2s;
+  border:1px solid transparent;white-space:nowrap;
+}
+.btn svg{width:14px;height:14px;flex-shrink:0;}
+.btn-brand{background:var(--brand);color:#fff;border-color:var(--brand);}
+.btn-brand:hover{background:var(--brand-dark);border-color:var(--brand-dark);transform:translateY(-1px);box-shadow:0 6px 20px rgba(139,92,246,0.35);text-decoration:none;color:#fff;}
+.btn-outline{background:transparent;color:var(--text-2);border-color:var(--border-2);}
+.btn-outline:hover{border-color:var(--border-3);color:var(--text);transform:translateY(-1px);text-decoration:none;}
+.hero-code{
+  display:inline-flex;align-items:center;gap:0.75rem;
+  background:var(--bg-surface);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:0.5rem 1rem;
+  font-family:var(--font-mono);font-size:0.75rem;color:var(--text-3);
+  margin:0 auto;
+}
+.hero-code .token{color:var(--purple);}
+.hero-code .sep{color:var(--border-3);}
+
+/* =================== LOGOS BAND =================== */
+.logos-band{
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  padding:1.5rem 1.5rem;
+  position:relative;z-index:1;
+}
+.logos-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:0.5rem;flex-wrap:wrap;}
+.logos-label{font-family:var(--font-mono);font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);margin-right:1rem;white-space:nowrap;}
+.logo-pill{
+  display:flex;align-items:center;gap:0.4rem;
+  padding:0.3rem 0.8rem;border:1px solid var(--border);
+  border-radius:100px;font-size:0.75rem;color:var(--text-3);
+  background:var(--bg-surface);
+  transition:all 0.15s;
+}
+.logo-pill svg{width:14px;height:14px;flex-shrink:0;}
+
+/* =================== SECTIONS =================== */
+.section{padding:80px 1.5rem;position:relative;z-index:1;}
+.section-inner{max-width:1200px;margin:0 auto;}
+.section-eyebrow{
+  font-family:var(--font-mono);font-size:0.62rem;
+  text-transform:uppercase;letter-spacing:0.1em;
+  color:var(--brand);margin-bottom:0.6rem;font-weight:600;
+}
+.section-title{
+  font-size:clamp(1.6rem,3vw,2.2rem);font-weight:700;
+  color:var(--text);letter-spacing:-0.03em;line-height:1.2;
+  margin-bottom:0.75rem;
+}
+.section-desc{font-size:0.92rem;color:var(--text-2);max-width:520px;line-height:1.75;}
+
+/* =================== PRODUCT GRID =================== */
+.product-grid-section{background:var(--bg);padding:80px 1.5rem;}
+.grid-label{
+  text-align:center;
+  font-family:var(--font-mono);font-size:0.62rem;text-transform:uppercase;
+  letter-spacing:0.1em;color:var(--text-3);margin-bottom:0.5rem;
+}
+.grid-heading{
+  text-align:center;
+  font-size:clamp(1.5rem,3vw,2rem);font-weight:700;color:var(--text);
+  letter-spacing:-0.03em;margin-bottom:0.6rem;
+}
+.grid-sub{text-align:center;color:var(--text-2);font-size:0.9rem;margin-bottom:3rem;max-width:500px;margin-left:auto;margin-right:auto;}
+
+/* BENTO GRID */
+.bento{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:auto auto;
+  gap:1px;
+  background:var(--border);
+  border:1px solid var(--border);
+  border-radius:var(--radius-xl);
+  overflow:hidden;
+}
+.bento-cell{
+  background:var(--bg-alt);
+  padding:2rem;
+  position:relative;
+  overflow:hidden;
+  transition:background 0.2s ease;
+  cursor:default;
+}
+.bento-cell:hover{background:var(--bg-surface);}
+/* top row spans */
+.bento-cell.span2{grid-column:span 2;}
+/* icon area */
+.bento-icon{
+  width:48px;height:48px;
+  background:var(--bg-surface2);
+  border:1px solid var(--border-2);
+  border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:1.25rem;
+  position:relative;z-index:2;
+}
+.bento-icon svg{width:22px;height:22px;}
+.bento-cell-title{font-size:0.95rem;font-weight:600;color:var(--text);margin-bottom:0.4rem;position:relative;z-index:2;}
+.bento-cell-desc{font-size:0.82rem;color:var(--text-2);line-height:1.65;position:relative;z-index:2;}
+/* Illustration area inside bento cell */
+.bento-illustration{
+  margin-top:1.25rem;
+  opacity:0.7;
+  transition:opacity 0.3s ease;
+  position:relative;z-index:2;
+}
+.bento-cell:hover .bento-illustration{opacity:1;}
+
+/* SVG animation on hover */
+.anim-container{
+  width:100%;
+  display:flex;align-items:center;justify-content:center;
+  min-height:120px;
+}
+.anim-container svg{max-width:100%;height:auto;}
+
+/* cell backgrounds / glows */
+.cell-glow-purple::after{
+  content:'';position:absolute;
+  bottom:-60px;right:-60px;
+  width:220px;height:220px;
+  background:radial-gradient(circle,rgba(139,92,246,0.12) 0%,transparent 70%);
+  pointer-events:none;
+}
+.cell-glow-blue::after{
+  content:'';position:absolute;
+  bottom:-60px;right:-60px;
+  width:220px;height:220px;
+  background:radial-gradient(circle,rgba(96,165,250,0.1) 0%,transparent 70%);
+  pointer-events:none;
+}
+.cell-glow-amber::after{
+  content:'';position:absolute;
+  bottom:-60px;right:-60px;
+  width:220px;height:220px;
+  background:radial-gradient(circle,rgba(251,191,36,0.08) 0%,transparent 70%);
+  pointer-events:none;
+}
+.cell-glow-emerald::after{
+  content:'';position:absolute;
+  bottom:-60px;right:-60px;
+  width:220px;height:220px;
+  background:radial-gradient(circle,rgba(52,211,153,0.08) 0%,transparent 70%);
+  pointer-events:none;
+}
+
+/* =================== ANIMATION STYLES =================== */
+
+/* Payment flow animation */
+.payment-flow .node{transition:fill 0.3s, opacity 0.3s;}
+.payment-flow .line{stroke-dasharray:80;stroke-dashoffset:80;transition:stroke-dashoffset 0.5s ease;}
+.bento-cell:hover .payment-flow .line{stroke-dashoffset:0;}
+.bento-cell:hover .payment-flow .node-active{fill:#8b5cf6;}
+
+/* Router animation */
+.router-paths .path{stroke-dasharray:60;stroke-dashoffset:60;transition:stroke-dashoffset 0.6s ease;}
+.bento-cell:hover .router-paths .path-1{stroke-dashoffset:0;transition-delay:0s;}
+.bento-cell:hover .router-paths .path-2{stroke-dashoffset:0;transition-delay:0.15s;}
+.bento-cell:hover .router-paths .path-3{stroke-dashoffset:0;transition-delay:0.3s;}
+.router-badge{opacity:0;transform:scale(0.8);transition:opacity 0.3s,transform 0.3s;}
+.bento-cell:hover .router-badge-1{opacity:1;transform:scale(1);transition-delay:0.2s;}
+.bento-cell:hover .router-badge-2{opacity:1;transform:scale(1);transition-delay:0.35s;}
+.bento-cell:hover .router-badge-3{opacity:1;transform:scale(1);transition-delay:0.5s;}
+
+/* Shield/Security animation */
+.shield-ring{transform-origin:center;opacity:0;transform:scale(0.5);}
+.bento-cell:hover .shield-ring-1{animation:ringPop 0.4s ease forwards 0.1s;}
+.bento-cell:hover .shield-ring-2{animation:ringPop 0.4s ease forwards 0.25s;}
+.bento-cell:hover .shield-ring-3{animation:ringPop 0.4s ease forwards 0.4s;}
+@keyframes ringPop{
+  0%{opacity:0;transform:scale(0.5)}
+  60%{opacity:0.7;transform:scale(1.05)}
+  100%{opacity:0.35;transform:scale(1)}
+}
+
+/* Webhook animation */
+.webhook-wave{opacity:0;transform-origin:left center;}
+.bento-cell:hover .webhook-wave-1{animation:waveSend 1.2s ease forwards 0s;}
+.bento-cell:hover .webhook-wave-2{animation:waveSend 1.2s ease forwards 0.2s;}
+.bento-cell:hover .webhook-wave-3{animation:waveSend 1.2s ease forwards 0.4s;}
+@keyframes waveSend{
+  0%{opacity:0;transform:translateX(0) scaleX(0.2)}
+  30%{opacity:0.9}
+  100%{opacity:0;transform:translateX(60px) scaleX(1)}
+}
+
+/* Circuit breaker animation */
+.cb-state{opacity:0;transition:opacity 0.3s;}
+.bento-cell:hover .cb-closed{opacity:1;animation:cbCycle 2s ease infinite;}
+@keyframes cbCycle{
+  0%,30%{opacity:1}
+  35%,65%{opacity:0.3}
+  70%,100%{opacity:1}
+}
+.circuit-spark{opacity:0;}
+.bento-cell:hover .circuit-spark{animation:spark 0.6s ease forwards 0.2s;}
+@keyframes spark{
+  0%{opacity:0;transform:scale(0)}
+  50%{opacity:1;transform:scale(1.2)}
+  100%{opacity:0.8;transform:scale(1)}
+}
+
+/* Idempotency animation */
+.idem-key{opacity:0;transform:translateY(-6px);}
+.bento-cell:hover .idem-key-1{animation:keyFall 0.5s ease forwards 0s;}
+.bento-cell:hover .idem-key-2{animation:keyFall 0.5s ease forwards 0.2s;}
+.bento-cell:hover .idem-check{animation:checkPop 0.4s ease forwards 0.6s;}
+.idem-check{opacity:0;transform:scale(0);}
+@keyframes keyFall{
+  0%{opacity:0;transform:translateY(-10px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+@keyframes checkPop{
+  0%{opacity:0;transform:scale(0)}
+  70%{transform:scale(1.15)}
+  100%{opacity:1;transform:scale(1)}
+}
+
+/* =================== STATS ROW =================== */
+.stats-row{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);border-radius:var(--radius-xl);
+  overflow:hidden;margin-top:4rem;
+}
+.stat-cell{
+  background:var(--bg-alt);padding:2rem 1.5rem;
+  text-align:center;
+}
+.stat-number{font-size:2rem;font-weight:800;color:var(--text);letter-spacing:-0.04em;line-height:1;}
+.stat-number .unit{font-size:1rem;color:var(--brand);font-weight:600;}
+.stat-label{font-size:0.78rem;color:var(--text-3);margin-top:0.35rem;font-family:var(--font-mono);}
+
+/* =================== CODE SHOWCASE =================== */
+.code-showcase{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:1.5rem;align-items:start;
+  margin-top:3rem;
+}
+@media(max-width:900px){.code-showcase{grid-template-columns:1fr;}}
+.code-left .label{
+  font-family:var(--font-mono);font-size:0.62rem;text-transform:uppercase;
+  letter-spacing:0.1em;color:var(--brand);margin-bottom:0.5rem;
+}
+.code-left h2{font-size:1.5rem;font-weight:700;color:var(--text);letter-spacing:-0.03em;margin-bottom:0.75rem;}
+.code-left p{font-size:0.87rem;color:var(--text-2);line-height:1.75;margin-bottom:1.25rem;}
+.code-steps{display:flex;flex-direction:column;gap:0.75rem;}
+.code-step{display:flex;align-items:flex-start;gap:0.75rem;}
+.code-step-num{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--brand-faint2);border:1px solid rgba(139,92,246,0.3);
+  font-family:var(--font-mono);font-size:0.65rem;font-weight:700;color:var(--brand);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;
+}
+.code-step-text{font-size:0.84rem;color:var(--text-2);line-height:1.6;}
+.code-step-text strong{color:var(--text);}
+
+/* Code block */
+.code-block{
+  background:var(--bg-alt);border:1px solid var(--border);
+  border-radius:var(--radius-lg);overflow:hidden;
+}
+.code-block-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 1rem;height:40px;
+  background:var(--bg-surface);border-bottom:1px solid var(--border);
+}
+.code-block-dots{display:flex;gap:6px;}
+.code-block-dots span{width:10px;height:10px;border-radius:50%;display:block;}
+.dot-red{background:#f87171;opacity:0.6;}
+.dot-amber{background:#fbbf24;opacity:0.6;}
+.dot-green{background:#34d399;opacity:0.6;}
+.code-block-lang{font-family:var(--font-mono);font-size:0.62rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;}
+.code-block-body{padding:1.25rem;overflow-x:auto;}
+.code-block-body pre{font-family:var(--font-mono);font-size:0.78rem;line-height:1.9;color:#b0aac8;white-space:pre;}
+.t-k{color:#a78bfa;}.t-s{color:#fbbf24;}.t-n{color:#60a5fa;}.t-c{color:#4a4565;font-style:italic;}.t-m{color:#8b5cf6;font-weight:500;}.t-p{color:#555;}
+
+/* =================== GATEWAY COMPAT =================== */
+.compat-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr 1fr;
+  gap:1rem;margin-top:2rem;
+}
+@media(max-width:800px){.compat-grid{grid-template-columns:1fr 1fr;}}
+.compat-card{
+  background:var(--bg-alt);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:1.25rem;
+  transition:all 0.2s;
+}
+.compat-card:hover{border-color:var(--border-2);transform:translateY(-2px);}
+.compat-card-name{font-family:var(--font-mono);font-size:0.78rem;font-weight:600;color:var(--text);margin-bottom:0.5rem;}
+.compat-methods{display:flex;flex-direction:column;gap:0.3rem;}
+.compat-method{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:0.72rem;font-family:var(--font-mono);
+}
+.compat-method .name{color:var(--text-3);}
+.compat-check{color:var(--emerald);}
+.compat-na{color:var(--text-3);opacity:0.4;}
+.compat-beta{color:var(--amber);}
+
+/* =================== SECURITY SECTION =================== */
+.security-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1rem;margin-top:2rem;
+}
+@media(max-width:800px){.security-grid{grid-template-columns:1fr;}}
+.security-card{
+  background:var(--bg-alt);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:1.5rem;
+}
+.security-card-icon{
+  width:36px;height:36px;
+  background:var(--bg-surface2);border:1px solid var(--border-2);
+  border-radius:var(--radius);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:0.875rem;
+}
+.security-card-icon svg{width:18px;height:18px;}
+.security-card-title{font-size:0.9rem;font-weight:600;color:var(--text);margin-bottom:0.35rem;}
+.security-card-desc{font-size:0.8rem;color:var(--text-2);line-height:1.65;}
+
+/* =================== CTA =================== */
+.cta-section{
+  padding:80px 1.5rem;text-align:center;
+  position:relative;z-index:1;
+}
+.cta-inner{
+  max-width:700px;margin:0 auto;
+  background:var(--bg-alt);border:1px solid var(--border);
+  border-radius:var(--radius-xl);padding:3.5rem 2rem;
+  position:relative;overflow:hidden;
+}
+.cta-inner::before{
+  content:'';position:absolute;
+  top:-100px;left:50%;transform:translateX(-50%);
+  width:600px;height:400px;
+  background:radial-gradient(ellipse,rgba(139,92,246,0.1) 0%,transparent 65%);
+  pointer-events:none;
+}
+.cta-title{font-size:clamp(1.5rem,3vw,2rem);font-weight:800;color:var(--text);letter-spacing:-0.04em;margin-bottom:0.75rem;position:relative;}
+.cta-sub{color:var(--text-2);font-size:0.9rem;margin-bottom:2rem;position:relative;}
+.cta-actions{display:flex;align-items:center;justify-content:center;gap:0.75rem;flex-wrap:wrap;position:relative;}
+.cta-note{margin-top:1.25rem;font-family:var(--font-mono);font-size:0.65rem;color:var(--text-3);}
+
+/* =================== FOOTER =================== */
+footer{
+  border-top:1px solid var(--border);
+  padding:2rem 1.5rem;position:relative;z-index:1;
+}
+.footer-inner{
+  max-width:1200px;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:1rem;
+}
+.footer-copy{font-family:var(--font-mono);font-size:0.7rem;color:var(--text-3);}
+.footer-links{display:flex;gap:1.25rem;}
+.footer-link{font-size:0.78rem;color:var(--text-3);}
+.footer-link:hover{color:var(--brand);text-decoration:none;}
+
+/* =================== RESPONSIVE =================== */
+@media(max-width:900px){
+  .bento{grid-template-columns:1fr;border-radius:var(--radius-lg);}
+  .bento-cell.span2{grid-column:span 1;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .nav-links{display:none;}
+}
+@media(max-width:500px){
+  .stats-row{grid-template-columns:1fr;}
+  .hero-title{font-size:2rem;}
+}
+
+/* =================== TAG =================== */
+.tag{
+  display:inline-flex;align-items:center;
+  font-family:var(--font-mono);font-size:0.6rem;
+  padding:0.1rem 0.4rem;font-weight:600;
+  letter-spacing:0.03em;border-radius:4px;border:1px solid;
+  white-space:nowrap;
+}
+.tag-green{background:rgba(52,211,153,0.1);color:#34d399;border-color:rgba(52,211,153,0.3);}
+.tag-amber{background:rgba(251,191,36,0.1);color:var(--amber);border-color:rgba(251,191,36,0.3);}
+.tag-purple{background:rgba(139,92,246,0.12);color:#a78bfa;border-color:rgba(139,92,246,0.3);}
+
+/* Divider */
+.divider{height:1px;background:var(--border);}
+</style>
+</head>
+<body>
+
+<!-- NAV BACKDROP -->
+<div class="nav-backdrop" id="navBackdrop" onclick="closeAllMenus()"></div>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <div class="nav-inner">
+    <!-- Logo -->
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M9 3v14M9 3H5M9 3h4M15 3v14M15 3h4"/></svg>
+      </div>
+      <span class="nav-logo-text">Orquestraio</span>
+      <span class="nav-logo-version">v0.4</span>
+    </a>
+
+    <!-- Links -->
+    <div class="nav-links">
+
+      <!-- Produto -->
+      <div class="nav-item" id="ni-produto">
+        <button class="nav-trigger" onclick="toggleMenu('produto')">
+          Produto
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+      </div>
+
+      <!-- Desenvolvedores -->
+      <div class="nav-item" id="ni-dev">
+        <button class="nav-trigger" onclick="toggleMenu('dev')">
+          Desenvolvedores
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+      </div>
+
+      <!-- Docs (plain link) -->
+      <div class="nav-item">
+        <a href="docs/index.html" class="nav-trigger">Docs</a>
+      </div>
+
+      <!-- Changelog (plain link) -->
+      <div class="nav-item">
+        <a href="docs/changelog.html" class="nav-trigger">
+          Changelog
+          <span style="display:inline-flex;align-items:center;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);color:#a78bfa;font-family:var(--font-mono);font-size:0.55rem;padding:0.05rem 0.3rem;border-radius:4px;letter-spacing:0.03em;font-weight:600;margin-left:0.15rem;">Novo</span>
+        </a>
+      </div>
+
+    </div><!-- end nav-links -->
+
+    <!-- Right side -->
+    <div class="nav-right">
+      <a href="https://github.com/vitinh0z/orquestraio" target="_blank" rel="noopener" class="nav-btn-outline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:0.35rem;"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        GitHub
+      </a>
+      <a href="docs/quickstart.html" class="nav-btn-brand">Começar →</a>
+    </div>
+
+    <button class="nav-hamburger" onclick="toggleMobile()" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════ MEGA: PRODUTO ═══════════════ -->
+<div class="mega-wrap" id="mega-produto">
+  <div class="mega-inner cols-3">
+
+    <div class="mega-col">
+      <div class="mega-col-label">API</div>
+
+      <a href="docs/processar-pagamento.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Processar Pagamento</div>
+          <div class="mega-item-desc">POST /v1/payments — PIX, boleto e cartão em um endpoint</div>
+        </div>
+      </a>
+
+      <a href="docs/metodos-pagamento.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Métodos de Pagamento</div>
+          <div class="mega-item-desc">pix, boleto e card_token — compatibilidade por gateway</div>
+        </div>
+      </a>
+
+      <a href="docs/webhooks.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Webhooks</div>
+          <div class="mega-item-desc">Eventos normalizados com HMAC-SHA256 por tenant</div>
+        </div>
+      </a>
+
+      <a href="docs/erros-status.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Erros &amp; Status</div>
+          <div class="mega-item-desc">400, 401, 403, 409, 429 — formato StandardError</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="mega-col">
+      <div class="mega-col-label">Funcionalidades</div>
+
+      <a href="docs/smartrouter.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">SmartRouter</div>
+          <div class="mega-item-desc">Roteamento automático por moeda, método e valor</div>
+        </div>
+      </a>
+
+      <a href="docs/resiliencia.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Idempotência</div>
+          <div class="mega-item-desc">Redis TTL 24h — nunca processa duas vezes</div>
+        </div>
+      </a>
+
+      <a href="docs/resiliencia.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Circuit Breaker</div>
+          <div class="mega-item-desc">Resilience4j — CLOSED, OPEN, HALF_OPEN por gateway</div>
+        </div>
+      </a>
+
+      <a href="docs/seguranca.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Segurança</div>
+          <div class="mega-item-desc">AES-256-GCM, SHA-256, HMAC — checklist de produção</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="mega-col">
+      <div class="mega-col-label">Mais</div>
+
+      <a href="docs/rate-limiting.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Rate Limiting <span style="font-size:0.62rem;color:var(--blue);font-family:var(--font-mono);margin-left:4px;">v0.6</span></div>
+          <div class="mega-item-desc">Bucket4j + Redis — planejado para a próxima versão</div>
+        </div>
+      </a>
+
+      <a href="docs/sandbox.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m7 13 3-3-3-3M13 13h4"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Sandbox &amp; MOCK</div>
+          <div class="mega-item-desc">Gateway fake — simula 300ms, força erro com amount 99.99</div>
+        </div>
+      </a>
+
+      <a href="docs/glossario.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Glossário</div>
+          <div class="mega-item-desc">Tenant, SmartRouter, Circuit Breaker, MOCK e mais</div>
+        </div>
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════ MEGA: DESENVOLVEDORES ═══════════════ -->
+<div class="mega-wrap" id="mega-dev">
+  <div class="mega-inner cols-3">
+
+    <div class="mega-col">
+      <div class="mega-col-label">Desenvolvedores</div>
+
+      <a href="docs/index.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Documentação</div>
+          <div class="mega-item-desc">Referência completa da API e guias de integração</div>
+        </div>
+      </a>
+
+      <a href="docs/quickstart.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Primeiros Passos</div>
+          <div class="mega-item-desc">Do zero ao primeiro pagamento em 3 minutos com Docker</div>
+        </div>
+      </a>
+
+      <a href="docs/autenticacao.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Autenticação</div>
+          <div class="mega-item-desc">x-api-key, prefixos Oz_live_ / Oz_test_, revogação</div>
+        </div>
+      </a>
+
+      <a href="docs/changelog.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Changelog</div>
+          <div class="mega-item-desc">Novidades do v0.4.0 — idempotencyKey fix, Webhooks</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="mega-col">
+      <div class="mega-col-label">Recursos</div>
+
+      <a href="https://github.com/vitinh0z/orquestraio" target="_blank" rel="noopener" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Open Source</div>
+          <div class="mega-item-desc">Código aberto no GitHub — MIT License</div>
+        </div>
+      </a>
+
+      <a href="docs/sandbox.html" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Sandbox &amp; MOCK</div>
+          <div class="mega-item-desc">Teste sem credenciais reais de gateway</div>
+        </div>
+      </a>
+
+      <a href="docs/seguranca.html#boas-praticas" class="mega-item">
+        <div class="mega-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div class="mega-item-body">
+          <div class="mega-item-title">Checklist de Produção</div>
+          <div class="mega-item-desc">TLS, rotação de chaves, HMAC em webhooks e mais</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="mega-col">
+      <div class="mega-col-label">
+        <a href="docs/changelog.html">Changelog <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+      </div>
+
+      <a href="docs/changelog.html" class="mega-post">
+        <div class="mega-post-title">v0.4.0-alpha — Webhooks &amp; idempotencyKey fix</div>
+        <div class="mega-post-desc">Seção de Webhooks com normalização cross-gateway. Typo crítico corrigido: idempotecyKey → idempotencyKey. Gateway MOCK: cenário de erro via amount 99.99.</div>
+      </a>
+
+      <a href="docs/changelog.html" class="mega-post">
+        <div class="mega-post-title">v0.3.2 — PayPal Beta &amp; Circuit Breaker</div>
+        <div class="mega-post-desc">Suporte a PayPal (beta) para USD/EUR ≥ $50. Circuit Breaker configurável por gateway via Resilience4j. AES-256 para credenciais.</div>
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      v0.4.0-alpha — agora com Webhooks e Circuit Breaker
+    </div>
+    <h1 class="hero-title">
+      Múltiplos gateways.<br>
+      <span class="accent">Uma única API.</span>
+    </h1>
+    <p class="hero-sub">
+      Processe PIX, boleto e cartão em Stripe, MercadoPago e PayPal com roteamento inteligente, idempotência e resiliência embutidos. Do zero ao primeiro pagamento em 3 minutos.
+    </p>
+    <div class="hero-actions">
+      <a href="docs/quickstart.html" class="btn btn-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Primeiros Passos
+      </a>
+      <a href="docs/index.html" class="btn btn-outline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Ver Documentação
+      </a>
+    </div>
+    <div class="hero-code">
+      <span class="t-m">curl</span>
+      <span style="color:#555">-X POST</span>
+      <span class="token" style="color:#a78bfa">localhost:8080/v1/payments</span>
+      <span class="sep">·</span>
+      <span style="color:#555;">x-api-key:</span>
+      <span style="color:#fbbf24;">orquestraio-livre-123</span>
+    </div>
+  </div>
+</section>
+
+<!-- LOGOS BAND -->
+<div class="logos-band">
+  <div class="logos-inner">
+    <span class="logos-label">Integra com</span>
+    <div class="logo-pill">
+      <svg viewBox="0 0 24 24" fill="#635bff" width="14" height="14"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/></svg>
+      Stripe
+    </div>
+    <div class="logo-pill">
+      <svg viewBox="0 0 24 24" fill="#00b1ea" width="14" height="14"><path d="M12 0C5.374 0 0 5.374 0 12c0 6.627 5.374 12 12 12 6.628 0 12-5.373 12-12 0-6.626-5.372-12-12-12zm5.27 9.27l-6.42 6.42a.75.75 0 01-1.06 0L6.73 12.63a.75.75 0 011.06-1.06l2.53 2.53 5.89-5.89a.75.75 0 011.06 1.06z"/></svg>
+      MercadoPago
+    </div>
+    <div class="logo-pill">
+      <svg viewBox="0 0 24 24" fill="#003087" width="14" height="14"><path d="M20.067 8.478c.492.88.556 2.014.3 3.327-.74 3.806-3.276 5.12-6.514 5.12h-.5a.805.805 0 00-.794.68l-.04.22-.63 3.993-.032.17a.804.804 0 01-.794.679H7.72a.483.483 0 01-.477-.558L8.(86 12.23h.02l.54-3.44.032-.165a.804.804 0 01.794-.679h1.587c3.254 0 5.798-1.325 6.543-5.16.306-1.595.15-2.927-.65-3.864-.222-.26-.5-.476-.814-.644.18.5.277 1.053.229 1.639z"/><path d="M18.905 7.083a5.38 5.38 0 00-.575-.133 7.655 7.655 0 00-1.158-.096H13.35a.803.803 0 00-.793.679l-1.049 6.65-.03.186a.805.805 0 01.794-.68h.5c3.238 0 5.774-1.314 6.514-5.12.22-1.15.18-2.11-.168-2.915-.053-.124-.107-.242-.17-.357l-.043-.214z"/></svg>
+      PayPal
+    </div>
+    <div class="logo-pill">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg>
+      MOCK
+    </div>
+    <div class="logo-pill">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Redis
+    </div>
+    <div class="logo-pill">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      Resilience4j
+    </div>
+    <div class="logo-pill">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#f89820" stroke-width="2" width="14" height="14"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      Spring Boot
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCT GRID -->
+<div class="product-grid-section">
+  <div class="section-inner">
+    <p class="grid-label">Plataforma</p>
+    <h2 class="grid-heading">Tudo que você precisa para pagamentos</h2>
+    <p class="grid-sub">Use um ou todos. Produtos best-of-breed, integrados como plataforma.</p>
+
+    <div class="bento">
+
+      <!-- CELL 1: Payment Processing (span 2) -->
+      <div class="bento-cell span2 cell-glow-purple">
+        <div class="bento-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        </div>
+        <div class="bento-cell-title">Processamento de Pagamentos</div>
+        <div class="bento-cell-desc">Processe PIX, boleto e cartão em múltiplos gateways com uma única chamada. Roteamento automático e fallback embutido sem nenhuma configuração extra.</div>
+        <div class="bento-illustration">
+          <div class="anim-container">
+            <!-- Payment flow SVG animation -->
+            <svg class="payment-flow" viewBox="0 0 380 120" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:380px;width:100%">
+              <!-- API Node -->
+              <rect x="10" y="40" width="80" height="40" rx="8" fill="#1a1a1a" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+              <text x="50" y="56" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" fill="#a78bfa" font-weight="600">POST</text>
+              <text x="50" y="68" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#636363">/v1/payments</text>
+
+              <!-- Line 1 -->
+              <line class="line" x1="90" y1="60" x2="150" y2="60" stroke="#a78bfa" stroke-width="1.5" opacity="0.6"/>
+              <!-- Arrow -->
+              <polygon class="node node-active" points="148,56 156,60 148,64" fill="#4a4565" opacity="0.8"/>
+
+              <!-- SmartRouter Node -->
+              <rect x="156" y="40" width="80" height="40" rx="8" fill="#1a1a1a" stroke="rgba(139,92,246,0.25)" stroke-width="1"/>
+              <text x="196" y="56" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" fill="#a78bfa" font-weight="600">Smart</text>
+              <text x="196" y="68" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" fill="#636363">Router</text>
+
+              <!-- Line 2 -->
+              <line class="line" x1="236" y1="60" x2="296" y2="60" stroke="#a78bfa" stroke-width="1.5" opacity="0.6"/>
+              <polygon class="node node-active" points="294,56 302,60 294,64" fill="#4a4565" opacity="0.8"/>
+
+              <!-- Gateway Node -->
+              <rect x="302" y="40" width="70" height="40" rx="8" fill="#1a1a1a" stroke="rgba(52,211,153,0.25)" stroke-width="1"/>
+              <text x="337" y="56" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" fill="#34d399" font-weight="600">APPROVED</text>
+              <text x="337" y="68" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#636363">201 Created</text>
+
+              <!-- Status badges below -->
+              <rect x="10" y="94" width="36" height="16" rx="4" fill="rgba(167,139,250,0.1)" stroke="rgba(167,139,250,0.25)" stroke-width="1"/>
+              <text x="28" y="105" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="6" fill="#a78bfa">pix</text>
+
+              <rect x="54" y="94" width="44" height="16" rx="4" fill="rgba(167,139,250,0.1)" stroke="rgba(167,139,250,0.25)" stroke-width="1"/>
+              <text x="76" y="105" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="6" fill="#a78bfa">boleto</text>
+
+              <rect x="106" y="94" width="60" height="16" rx="4" fill="rgba(167,139,250,0.1)" stroke="rgba(167,139,250,0.25)" stroke-width="1"/>
+              <text x="136" y="105" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="6" fill="#a78bfa">card_token</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- CELL 2: SmartRouter -->
+      <div class="bento-cell cell-glow-blue">
+        <div class="bento-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        </div>
+        <div class="bento-cell-title">SmartRouter</div>
+        <div class="bento-cell-desc">Roteamento inteligente por moeda, método e valor. BRL + PIX → MercadoPago. USD + card → Stripe.</div>
+        <div class="bento-illustration">
+          <div class="anim-container" style="min-height:90px">
+            <svg class="router-paths" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:220px;width:100%">
+              <!-- Center hub -->
+              <circle cx="80" cy="50" r="18" fill="#1a1a1a" stroke="rgba(96,165,250,0.3)" stroke-width="1.5"/>
+              <text x="80" y="48" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="6" fill="#60a5fa" font-weight="600">Smart</text>
+              <text x="80" y="58" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="6" fill="#636363">Router</text>
+
+              <!-- Path to Stripe -->
+              <line class="path path-1" x1="98" y1="42" x2="148" y2="22" stroke="#a78bfa" stroke-width="1.5" opacity="0.8"/>
+              <!-- Stripe badge -->
+              <g class="router-badge router-badge-1">
+                <rect x="149" y="12" width="46" height="20" rx="5" fill="#1a1a1a" stroke="rgba(167,139,250,0.3)" stroke-width="1"/>
+                <text x="172" y="24" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" fill="#a78bfa" font-weight="600">Stripe</text>
+              </g>
+
+              <!-- Path to MercadoPago -->
+              <line class="path path-2" x1="98" y1="50" x2="148" y2="50" stroke="#34d399" stroke-width="1.5" opacity="0.8"/>
+              <!-- MP badge -->
+              <g class="router-badge router-badge-2">
+                <rect x="149" y="40" width="46" height="20" rx="5" fill="#1a1a1a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+                <text x="172" y="52" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="5.5" fill="#34d399" font-weight="600">Mercado</text>
+                <text x="172" y="59" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="5" fill="#4a7a64">Pago</text>
+              </g>
+
+              <!-- Path to PayPal -->
+              <line class="path path-3" x1="98" y1="58" x2="148" y2="78" stroke="#fbbf24" stroke-width="1.5" opacity="0.8"/>
+              <!-- PayPal badge -->
+              <g class="router-badge router-badge-3">
+                <rect x="149" y="68" width="46" height="20" rx="5" fill="#1a1a1a" stroke="rgba(251,191,36,0.3)" stroke-width="1"/>
+                <text x="172" y="80" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" fill="#fbbf24" font-weight="600">PayPal</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- CELL 3: Idempotência -->
+      <div class="bento-cell cell-glow-amber">
+        <div class="bento-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <div class="bento-cell-title">Idempotência</div>
+        <div class="bento-cell-desc">Chave UUID v4 + Redis TTL 24h. A mesma requisição nunca é processada duas vezes, mesmo com falhas de rede.</div>
+        <div class="bento-illustration">
+          <div class="anim-container" style="min-height:80px">
+            <svg viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:210px;width:100%">
+              <!-- First request key -->
+              <g class="idem-key idem-key-1">
+                <rect x="10" y="10" width="130" height="22" rx="5" fill="#1a1a1a" stroke="rgba(251,191,36,0.25)" stroke-width="1"/>
+                <text x="22" y="24" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#fbbf24">idempotencyKey:</text>
+                <text x="105" y="24" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#636363">order-abc</text>
+              </g>
+              <!-- Second request key (duplicate) -->
+              <g class="idem-key idem-key-2">
+                <rect x="10" y="38" width="130" height="22" rx="5" fill="#1a1a1a" stroke="rgba(251,191,36,0.15)" stroke-width="1" stroke-dasharray="4,3"/>
+                <text x="22" y="52" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#4a3a10">idempotencyKey:</text>
+                <text x="105" y="52" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#4a3a10">order-abc</text>
+                <text x="90" y="48" font-family="JetBrains Mono,monospace" font-size="5.5" fill="#fbbf24">duplicate</text>
+              </g>
+              <!-- Check mark -->
+              <g class="idem-check">
+                <circle cx="173" cy="35" r="16" fill="rgba(52,211,153,0.12)" stroke="rgba(52,211,153,0.3)" stroke-width="1.5"/>
+                <path d="M165 35l5 5 9-9" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- CELL 4: Circuit Breaker -->
+      <div class="bento-cell cell-glow-purple">
+        <div class="bento-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div class="bento-cell-title">Circuit Breaker</div>
+        <div class="bento-cell-desc">Resilience4j por gateway. CLOSED → OPEN → HALF_OPEN automático. Fallback para gateway alternativo sem intervenção.</div>
+        <div class="bento-illustration">
+          <div class="anim-container" style="min-height:80px">
+            <svg viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:210px;width:100%">
+              <!-- States row -->
+              <g class="cb-closed cb-state">
+                <rect x="8" y="28" width="50" height="24" rx="5" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.35)" stroke-width="1.5"/>
+                <text x="33" y="42" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" fill="#34d399" font-weight="700">CLOSED</text>
+              </g>
+              <line x1="60" y1="40" x2="76" y2="40" stroke="#555" stroke-width="1" stroke-dasharray="3,2"/>
+              <polygon points="74,37 80,40 74,43" fill="#555"/>
+
+              <g class="circuit-spark">
+                <rect x="82" y="28" width="44" height="24" rx="5" fill="rgba(248,113,113,0.1)" stroke="rgba(248,113,113,0.35)" stroke-width="1.5"/>
+                <text x="104" y="42" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" fill="#f87171" font-weight="700">OPEN</text>
+              </g>
+              <line x1="128" y1="40" x2="144" y2="40" stroke="#555" stroke-width="1" stroke-dasharray="3,2"/>
+              <polygon points="142,37 148,40 142,43" fill="#555"/>
+
+              <rect x="150" y="28" width="44" height="24" rx="5" fill="rgba(251,191,36,0.08)" stroke="rgba(251,191,36,0.25)" stroke-width="1"/>
+              <text x="172" y="38" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="5.5" fill="#fbbf24" font-weight="700">HALF</text>
+              <text x="172" y="48" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="5.5" fill="#fbbf24" font-weight="700">OPEN</text>
+
+              <!-- Threshold label -->
+              <text x="104" y="70" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="6" fill="#4a4565">falhas &gt; 50% em 10 req → OPEN</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- CELL 5: Webhooks (span 2) -->
+      <div class="bento-cell span2 cell-glow-blue">
+        <div class="bento-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </div>
+        <div class="bento-cell-title">Webhooks Normalizados</div>
+        <div class="bento-cell-desc">Todos os eventos chegam no mesmo formato, independente do gateway. Stripe, MercadoPago ou PayPal — você implementa uma vez. Assinados com HMAC-SHA256 por tenant.</div>
+        <div class="bento-illustration">
+          <div class="anim-container" style="min-height:90px">
+            <svg viewBox="0 0 380 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:380px;width:100%">
+              <!-- Source: Orquestraio -->
+              <rect x="8" y="30" width="80" height="40" rx="8" fill="#1a1a1a" stroke="rgba(96,165,250,0.2)" stroke-width="1"/>
+              <text x="48" y="46" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#a78bfa" font-weight="600">Orquestraio</text>
+              <text x="48" y="58" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="6" fill="#636363">event emitter</text>
+
+              <!-- Waves -->
+              <g class="webhook-wave webhook-wave-1">
+                <path d="M94 50 Q104 42 114 50" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.8"/>
+              </g>
+              <g class="webhook-wave webhook-wave-2">
+                <path d="M104 50 Q118 38 132 50" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+              </g>
+              <g class="webhook-wave webhook-wave-3">
+                <path d="M118 50 Q136 35 154 50" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.4"/>
+              </g>
+
+              <!-- Event payload card -->
+              <rect x="162" y="20" width="140" height="60" rx="8" fill="#0f0f0f" stroke="rgba(96,165,250,0.2)" stroke-width="1"/>
+              <text x="175" y="36" font-family="JetBrains Mono,monospace" font-size="6" fill="#60a5fa">event:</text>
+              <text x="213" y="36" font-family="JetBrains Mono,monospace" font-size="6" fill="#fbbf24">"payment.approved"</text>
+              <text x="175" y="48" font-family="JetBrains Mono,monospace" font-size="6" fill="#60a5fa">status:</text>
+              <text x="213" y="48" font-family="JetBrains Mono,monospace" font-size="6" fill="#34d399">"APPROVED"</text>
+              <text x="175" y="60" font-family="JetBrains Mono,monospace" font-size="6" fill="#60a5fa">provider:</text>
+              <text x="213" y="60" font-family="JetBrains Mono,monospace" font-size="6" fill="#a78bfa">"MERCADO_PAGO"</text>
+              <text x="175" y="72" font-family="JetBrains Mono,monospace" font-size="6" fill="#4a4565">X-Signature: sha256=...</text>
+
+              <!-- Arrow to your server -->
+              <line x1="302" y1="50" x2="340" y2="50" stroke="#60a5fa" stroke-width="1.5" opacity="0.6"/>
+              <polygon points="338,46 346,50 338,54" fill="#60a5fa" opacity="0.6"/>
+
+              <rect x="347" y="30" width="26" height="40" rx="6" fill="#1a1a1a" stroke="rgba(96,165,250,0.15)" stroke-width="1"/>
+              <text x="360" y="53" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="5.5" fill="#636363" transform="rotate(-90,360,53)">seu server</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- CELL 6: Segurança -->
+      <div class="bento-cell cell-glow-emerald">
+        <div class="bento-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="bento-cell-title">Segurança</div>
+        <div class="bento-cell-desc">AES-256-GCM para credenciais, SHA-256 para API keys, HMAC em webhooks e dados de cartão nunca armazenados.</div>
+        <div class="bento-illustration">
+          <div class="anim-container" style="min-height:80px">
+            <svg viewBox="0 0 200 90" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:210px;width:100%">
+              <!-- Shield -->
+              <path d="M100 15 L130 26 L130 52 C130 65 100 75 100 75 C100 75 70 65 70 52 L70 26 Z" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.3)" stroke-width="1.5"/>
+              <path d="M88 45 l8 8 16-16" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+              <!-- Rings -->
+              <circle class="shield-ring shield-ring-1" cx="100" cy="45" r="26" stroke="rgba(52,211,153,0.2)" stroke-width="1" fill="none"/>
+              <circle class="shield-ring shield-ring-2" cx="100" cy="45" r="36" stroke="rgba(52,211,153,0.12)" stroke-width="1" fill="none"/>
+              <circle class="shield-ring shield-ring-3" cx="100" cy="45" r="46" stroke="rgba(52,211,153,0.06)" stroke-width="1" fill="none"/>
+
+              <!-- Labels -->
+              <text x="100" y="83" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#34d399" opacity="0.7">AES-256 · SHA-256 · HMAC</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end bento -->
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-cell">
+        <div class="stat-number">3<span class="unit">+</span></div>
+        <div class="stat-label">gateways suportados</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-number">24<span class="unit">h</span></div>
+        <div class="stat-label">TTL idempotência</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-number">300<span class="unit">ms</span></div>
+        <div class="stat-label">latência MOCK</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-number">&lt;3<span class="unit">min</span></div>
+        <div class="stat-label">do zero ao primeiro pagamento</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CODE SHOWCASE -->
+<section class="section" style="background:var(--bg-alt);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="section-inner">
+    <div class="code-showcase">
+      <div class="code-left">
+        <div class="label">Quickstart</div>
+        <h2>Do zero ao primeiro pagamento em 3 passos</h2>
+        <p>Sem configurar credenciais de gateways. Use o gateway <code>MOCK</code> e Docker para começar imediatamente.</p>
+        <div class="code-steps" style="margin-top:1.5rem;">
+          <div class="code-step">
+            <div class="code-step-num">1</div>
+            <div class="code-step-text"><strong>Suba o servidor</strong> com <code>docker-compose up -d</code>. API disponível em <code>localhost:8080</code>.</div>
+          </div>
+          <div class="code-step">
+            <div class="code-step-num">2</div>
+            <div class="code-step-text"><strong>Faça o POST</strong> com <code>x-api-key: orquestraio-livre-123</code> e <code>metadata.gateway: MOCK</code>.</div>
+          </div>
+          <div class="code-step">
+            <div class="code-step-num">3</div>
+            <div class="code-step-text"><strong>Receba</strong> <code>status: "APPROVED"</code> e configure seu webhook para atualizações assíncronas.</div>
+          </div>
+        </div>
+        <div style="margin-top:1.75rem;">
+          <a href="docs/quickstart.html" class="btn btn-brand">Ver guia completo →</a>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-block-header">
+          <div class="code-block-dots"><span class="dot-red"></span><span class="dot-amber"></span><span class="dot-green"></span></div>
+          <span class="code-block-lang">curl</span>
+        </div>
+        <div class="code-block-body">
+<pre><span class="t-m">curl</span> <span class="t-k">-X</span> POST http://localhost:8080<span class="t-s">/v1/payments</span> <span class="t-p">\</span>
+  <span class="t-k">-H</span> <span class="t-s">"x-api-key: orquestraio-livre-123"</span> <span class="t-p">\</span>
+  <span class="t-k">-H</span> <span class="t-s">"Content-Type: application/json"</span> <span class="t-p">\</span>
+  <span class="t-k">-d</span> <span class="t-s">'{
+    "idempotencyKey": "order-001",
+    "amount": 50.00,
+    "currency": "BRL",
+    "paymentMethodRequest": {
+      "type": "pix",
+      "token": null
+    },
+    "customer": {
+      "id": "usr_1",
+      "email": "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="62060714220f030b0e4c010d0f">[email&#160;protected]</a>",
+      "document": "000.000.000-00"
+    },
+    "metadata": { "gateway": "MOCK" }
+  }'</span>
+
+<span class="t-c">// Resposta 201 Created</span>
+<span class="t-p">{</span>
+  <span class="t-k">"paymentId"</span><span class="t-p">:</span> <span class="t-s">"550e8400-e29b-41d4..."</span><span class="t-p">,</span>
+  <span class="t-k">"status"</span><span class="t-p">:</span>    <span class="t-s">"APPROVED"</span><span class="t-p">,</span>
+  <span class="t-k">"amount"</span><span class="t-p">:</span>    <span class="t-n">50.00</span><span class="t-p">,</span>
+  <span class="t-k">"details"</span><span class="t-p">:</span>   <span class="t-p">{</span> <span class="t-k">"provider"</span><span class="t-p">:</span> <span class="t-s">"MOCK"</span> <span class="t-p">}</span>
+<span class="t-p">}</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GATEWAY COMPAT -->
+<section class="section">
+  <div class="section-inner">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:start;">
+      <div>
+        <p class="section-eyebrow">Compatibilidade</p>
+        <h2 class="section-title">Métodos por gateway</h2>
+        <p class="section-desc">O SmartRouter seleciona automaticamente. Ou force um gateway via <code>metadata.gateway</code>.</p>
+      </div>
+    </div>
+    <div class="compat-grid">
+      <div class="compat-card">
+        <div class="compat-card-name" style="color:#a78bfa;">STRIPE</div>
+        <div class="compat-methods">
+          <div class="compat-method"><span class="name">pix</span><span class="compat-na">—</span></div>
+          <div class="compat-method"><span class="name">boleto</span><span class="compat-na">—</span></div>
+          <div class="compat-method"><span class="name">card_token</span><span class="compat-check">✓</span></div>
+          <div class="compat-method"><span class="name">moedas</span><span style="font-family:var(--font-mono);font-size:0.68rem;color:#636363;">BRL/USD/EUR</span></div>
+        </div>
+      </div>
+      <div class="compat-card">
+        <div class="compat-card-name" style="color:#34d399;">MERCADO PAGO</div>
+        <div class="compat-methods">
+          <div class="compat-method"><span class="name">pix</span><span class="compat-check">✓</span></div>
+          <div class="compat-method"><span class="name">boleto</span><span class="compat-check">✓</span></div>
+          <div class="compat-method"><span class="name">card_token</span><span class="compat-check">✓</span></div>
+          <div class="compat-method"><span class="name">moedas</span><span style="font-family:var(--font-mono);font-size:0.68rem;color:#636363;">BRL</span></div>
+        </div>
+      </div>
+      <div class="compat-card">
+        <div class="compat-card-name" style="color:#fbbf24;">PAYPAL <span class="tag tag-amber" style="font-size:0.55rem;vertical-align:middle;">Beta</span></div>
+        <div class="compat-methods">
+          <div class="compat-method"><span class="name">pix</span><span class="compat-na">—</span></div>
+          <div class="compat-method"><span class="name">boleto</span><span class="compat-na">—</span></div>
+          <div class="compat-method"><span class="name">card_token</span><span class="compat-beta">Beta</span></div>
+          <div class="compat-method"><span class="name">moedas</span><span style="font-family:var(--font-mono);font-size:0.68rem;color:#636363;">USD/EUR</span></div>
+        </div>
+      </div>
+      <div class="compat-card">
+        <div class="compat-card-name" style="color:#636363;">MOCK <span class="tag" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.08);color:#555;font-size:0.55rem;vertical-align:middle;">dev</span></div>
+        <div class="compat-methods">
+          <div class="compat-method"><span class="name">pix</span><span class="compat-check">✓</span></div>
+          <div class="compat-method"><span class="name">boleto</span><span class="compat-check">✓</span></div>
+          <div class="compat-method"><span class="name">card_token</span><span class="compat-check">✓</span></div>
+          <div class="compat-method"><span class="name">forçar erro</span><span style="font-family:var(--font-mono);font-size:0.68rem;color:#f87171;">99.99</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section class="section" style="background:var(--bg-alt);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="section-inner">
+    <p class="section-eyebrow">Segurança</p>
+    <h2 class="section-title">Segurança de produção desde o primeiro dia</h2>
+    <p class="section-desc">Não é um addon. Criptografia, autenticação e proteção estão no core do Orquestraio.</p>
+    <div class="security-grid">
+      <div class="security-card">
+        <div class="security-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div class="security-card-title">API Key via SHA-256</div>
+        <div class="security-card-desc">O valor bruto da sua API key nunca é armazenado — apenas o hash SHA-256. Revogação instantânea sem downtime.</div>
+      </div>
+      <div class="security-card">
+        <div class="security-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="security-card-title">AES-256-GCM</div>
+        <div class="security-card-desc">Credenciais de gateway criptografadas em repouso. Chave mestre injetada via variável de ambiente — nunca persistida no banco.</div>
+      </div>
+      <div class="security-card">
+        <div class="security-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+        <div class="security-card-title">HMAC-SHA256 em Webhooks</div>
+        <div class="security-card-desc">Cada notificação é assinada com secret exclusivo por tenant. Verificação em tempo constante evita timing attacks.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-inner">
+    <h2 class="cta-title">Pronto para começar?</h2>
+    <p class="cta-sub">Configure em minutos com Docker. Nenhuma credencial de gateway necessária para os primeiros testes.</p>
+    <div class="cta-actions">
+      <a href="docs/quickstart.html" class="btn btn-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Primeiros Passos
+      </a>
+      <a href="docs/index.html" class="btn btn-outline">Documentação completa</a>
+      <a href="https://github.com/vitinh0z/orquestraio" target="_blank" class="btn btn-outline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        GitHub
+      </a>
+    </div>
+    <p class="cta-note">MIT License · v0.4.0-alpha · @vitinh0z</p>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <span class="footer-copy">© 2026 Orquestraio · <a href="https://github.com/vitinh0z" style="color:var(--brand);">@vitinh0z</a> · MIT License</span>
+    <div class="footer-links">
+      <a href="docs/index.html" class="footer-link">Docs</a>
+      <a href="docs/processar-pagamento.html" class="footer-link">API</a>
+      <a href="docs/changelog.html" class="footer-link">Changelog</a>
+      <a href="https://github.com/vitinh0z/orquestraio" class="footer-link">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── Mega menu logic ──────────────────────────────────────────
+const MENUS = {
+  produto: { ni: 'ni-produto', mega: 'mega-produto' },
+  dev:     { ni: 'ni-dev',     mega: 'mega-dev' },
+};
+let activeMenu = null;
+function toggleMenu(key) {
+  if (activeMenu === key) { closeAllMenus(); return; }
+  closeAllMenus(false);
+  activeMenu = key;
+  const { ni, mega } = MENUS[key];
+  document.getElementById(ni).classList.add('open');
+  document.getElementById(mega).classList.add('open');
+  document.getElementById('navBackdrop').classList.add('show');
+}
+function closeAllMenus(resetBackdrop = true) {
+  activeMenu = null;
+  Object.values(MENUS).forEach(({ ni, mega }) => {
+    document.getElementById(ni).classList.remove('open');
+    document.getElementById(mega).classList.remove('open');
+  });
+  if (resetBackdrop) document.getElementById('navBackdrop').classList.remove('show');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAllMenus(); });
+let lastScroll = 0;
+window.addEventListener('scroll', () => {
+  if (activeMenu && Math.abs(window.scrollY - lastScroll) > 60) closeAllMenus();
+  lastScroll = window.scrollY;
+});
+function toggleMobile() {}
+
+// Progress bar on scroll
+const progress = document.createElement('div');
+progress.style.cssText = 'position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,#8b5cf6,#a78bfa);z-index:9999;width:0;transition:width 0.1s linear;pointer-events:none;';
+document.body.prepend(progress);
+window.addEventListener('scroll', () => {
+  const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+  progress.style.width = pct + '%';
+});
+</script>
+</body>
+</html>
