@@ -254,6 +254,42 @@ nav{
   .nav-hamburger{display:flex;}
 }
 
+/* =================== MOBILE DRAWER =================== */
+.mobile-drawer{
+  position:fixed;top:60px;left:0;right:0;bottom:0;
+  background:rgba(5,5,5,0.98);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  z-index:197;
+  overflow-y:auto;
+  transform:translateX(100%);
+  transition:transform 0.25s ease;
+}
+.mobile-drawer.open{transform:translateX(0);}
+.mobile-drawer-inner{
+  padding:1.5rem;
+  display:flex;flex-direction:column;gap:0.25rem;
+}
+.mobile-section-label{
+  font-family:var(--font-mono);font-size:0.6rem;
+  text-transform:uppercase;letter-spacing:0.1em;
+  color:var(--text-3);padding:0.75rem 0.5rem 0.35rem;
+  margin-top:0.5rem;
+}
+.mobile-link{
+  display:flex;align-items:center;gap:0.6rem;
+  padding:0.65rem 0.75rem;
+  border-radius:var(--radius-md);
+  color:var(--text-2);font-size:0.9rem;
+  text-decoration:none;transition:background 0.12s,color 0.12s;
+}
+.mobile-link:hover{background:rgba(255,255,255,0.05);color:var(--text);text-decoration:none;}
+.mobile-link svg{width:15px;height:15px;flex-shrink:0;color:var(--text-3);}
+.mobile-divider{height:1px;background:var(--border);margin:0.5rem 0;}
+.mobile-cta-row{
+  display:flex;gap:0.75rem;padding:1rem 0.5rem 0;flex-wrap:wrap;
+}
+.mobile-cta-row .btn{flex:1;min-width:140px;justify-content:center;}
+
 /* =================== HERO =================== */
 .hero{
   padding:140px 1.5rem 80px;
@@ -752,11 +788,63 @@ footer{
       <a href="docs/quickstart.html" class="nav-btn-brand">Começar →</a>
     </div>
 
-    <button class="nav-hamburger" onclick="toggleMobile()" aria-label="Menu">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    <button class="nav-hamburger" id="navHamburger" onclick="toggleMobile()" aria-label="Menu" aria-expanded="false">
+      <svg id="hamburgerIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
     </button>
   </div>
 </nav>
+
+<!-- MOBILE DRAWER -->
+<div class="mobile-drawer" id="mobileDrawer" aria-hidden="true">
+  <div class="mobile-drawer-inner">
+
+    <div class="mobile-section-label">Produto</div>
+    <a href="docs/processar-pagamento.html" class="mobile-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      Processar Pagamento
+    </a>
+    <a href="docs/smartrouter.html" class="mobile-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      SmartRouter
+    </a>
+    <a href="docs/webhooks.html" class="mobile-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      Webhooks
+    </a>
+    <a href="docs/sandbox.html" class="mobile-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m7 13 3-3-3-3M13 13h4"/></svg>
+      Sandbox &amp; MOCK
+    </a>
+
+    <div class="mobile-divider"></div>
+
+    <div class="mobile-section-label">Desenvolvedores</div>
+    <a href="docs/index.html" class="mobile-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Docs
+    </a>
+    <a href="docs/quickstart.html" class="mobile-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Primeiros Passos
+    </a>
+    <a href="docs/changelog.html" class="mobile-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Changelog
+    </a>
+    <a href="https://github.com/vitinh0z/orquestraio" target="_blank" rel="noopener" class="mobile-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+      GitHub
+    </a>
+
+    <div class="mobile-divider"></div>
+
+    <div class="mobile-cta-row">
+      <a href="docs/quickstart.html" class="btn btn-brand">Começar em 3 minutos →</a>
+      <a href="docs/index.html" class="btn btn-outline">Ver API Reference</a>
+    </div>
+
+  </div>
+</div>
 
 <!-- ═══════════════ MEGA: PRODUTO ═══════════════ -->
 <div class="mega-wrap" id="mega-produto">
@@ -853,33 +941,23 @@ footer{
     <div class="mega-col">
       <div class="mega-col-label">Mais</div>
 
-      <a href="docs/rate-limiting.html" class="mega-item">
-        <div class="mega-item-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        </div>
-        <div class="mega-item-body">
-          <div class="mega-item-title">Rate Limiting <span style="font-size:0.62rem;color:var(--blue);font-family:var(--font-mono);margin-left:4px;">v0.6</span></div>
-          <div class="mega-item-desc">Bucket4j + Redis — planejado para a próxima versão</div>
-        </div>
-      </a>
-
       <a href="docs/sandbox.html" class="mega-item">
         <div class="mega-item-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m7 13 3-3-3-3M13 13h4"/></svg>
         </div>
         <div class="mega-item-body">
           <div class="mega-item-title">Sandbox &amp; MOCK</div>
-          <div class="mega-item-desc">Gateway fake — simula 300ms, força erro com amount 99.99</div>
+          <div class="mega-item-desc">Teste sem credenciais reais — simula 300ms, força erro com 99.99</div>
         </div>
       </a>
 
-      <a href="docs/glossario.html" class="mega-item">
+      <a href="docs/rate-limiting.html" class="mega-item">
         <div class="mega-item-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         </div>
         <div class="mega-item-body">
-          <div class="mega-item-title">Glossário</div>
-          <div class="mega-item-desc">Tenant, SmartRouter, Circuit Breaker, MOCK e mais</div>
+          <div class="mega-item-title">Rate Limiting <span style="font-size:0.62rem;color:var(--blue);font-family:var(--font-mono);margin-left:4px;">v0.6</span></div>
+          <div class="mega-item-desc">Planejado — Bucket4j + Redis</div>
         </div>
       </a>
     </div>
@@ -1000,16 +1078,16 @@ footer{
       <span class="accent">Uma única API.</span>
     </h1>
     <p class="hero-sub">
-      Processe PIX, boleto e cartão em Stripe, MercadoPago e PayPal com roteamento inteligente, idempotência e resiliência embutidos. Do zero ao primeiro pagamento em 3 minutos.
+      Integre Stripe, Mercado Pago e PayPal com um único endpoint. Roteamento, idempotência e fallback já inclusos.
     </p>
     <div class="hero-actions">
       <a href="docs/quickstart.html" class="btn btn-brand">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        Primeiros Passos
+        Começar em 3 minutos
       </a>
       <a href="docs/index.html" class="btn btn-outline">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        Ver Documentação
+        Ver API Reference
       </a>
     </div>
     <div class="hero-code">
@@ -1025,36 +1103,39 @@ footer{
 
 <!-- LOGOS BAND -->
 <div class="logos-band">
-  <div class="logos-inner">
-    <span class="logos-label">Integra com</span>
-    <div class="logo-pill">
-      <svg viewBox="0 0 24 24" fill="#635bff" width="14" height="14"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/></svg>
-      Stripe
+  <div class="logos-inner" style="flex-direction:column;gap:0.75rem;">
+    <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;justify-content:center;">
+      <span class="logos-label">Integra com</span>
+      <div class="logo-pill">
+        <svg viewBox="0 0 24 24" fill="#635bff" width="14" height="14"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/></svg>
+        Stripe
+      </div>
+      <div class="logo-pill">
+        <svg viewBox="0 0 24 24" fill="#00b1ea" width="14" height="14"><path d="M12 0C5.374 0 0 5.374 0 12c0 6.627 5.374 12 12 12 6.628 0 12-5.373 12-12 0-6.626-5.372-12-12-12zm5.27 9.27l-6.42 6.42a.75.75 0 01-1.06 0L6.73 12.63a.75.75 0 011.06-1.06l2.53 2.53 5.89-5.89a.75.75 0 011.06 1.06z"/></svg>
+        MercadoPago
+      </div>
+      <div class="logo-pill">
+        <svg viewBox="0 0 24 24" fill="#003087" width="14" height="14"><path d="M20.067 8.478c.492.88.556 2.014.3 3.327-.74 3.806-3.276 5.12-6.514 5.12h-.5a.805.805 0 00-.794.68l-.04.22-.63 3.993-.032.17a.804.804 0 01-.794.679H7.72a.483.483 0 01-.477-.558L8.86 12.23h.02l.54-3.44.032-.165a.804.804 0 01.794-.679h1.587c3.254 0 5.798-1.325 6.543-5.16.306-1.595.15-2.927-.65-3.864-.222-.26-.5-.476-.814-.644.18.5.277 1.053.229 1.639z"/><path d="M18.905 7.083a5.38 5.38 0 00-.575-.133 7.655 7.655 0 00-1.158-.096H13.35a.803.803 0 00-.793.679l-1.049 6.65-.03.186a.805.805 0 01.794-.68h.5c3.238 0 5.774-1.314 6.514-5.12.22-1.15.18-2.11-.168-2.915-.053-.124-.107-.242-.17-.357l-.043-.214z"/></svg>
+        PayPal
+      </div>
+      <div class="logo-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg>
+        MOCK
+      </div>
+      <div class="logo-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Redis
+      </div>
+      <div class="logo-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Resilience4j
+      </div>
+      <div class="logo-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f89820" stroke-width="2" width="14" height="14"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Spring Boot
+      </div>
     </div>
-    <div class="logo-pill">
-      <svg viewBox="0 0 24 24" fill="#00b1ea" width="14" height="14"><path d="M12 0C5.374 0 0 5.374 0 12c0 6.627 5.374 12 12 12 6.628 0 12-5.373 12-12 0-6.626-5.372-12-12-12zm5.27 9.27l-6.42 6.42a.75.75 0 01-1.06 0L6.73 12.63a.75.75 0 011.06-1.06l2.53 2.53 5.89-5.89a.75.75 0 011.06 1.06z"/></svg>
-      MercadoPago
-    </div>
-    <div class="logo-pill">
-      <svg viewBox="0 0 24 24" fill="#003087" width="14" height="14"><path d="M20.067 8.478c.492.88.556 2.014.3 3.327-.74 3.806-3.276 5.12-6.514 5.12h-.5a.805.805 0 00-.794.68l-.04.22-.63 3.993-.032.17a.804.804 0 01-.794.679H7.72a.483.483 0 01-.477-.558L8.(86 12.23h.02l.54-3.44.032-.165a.804.804 0 01.794-.679h1.587c3.254 0 5.798-1.325 6.543-5.16.306-1.595.15-2.927-.65-3.864-.222-.26-.5-.476-.814-.644.18.5.277 1.053.229 1.639z"/><path d="M18.905 7.083a5.38 5.38 0 00-.575-.133 7.655 7.655 0 00-1.158-.096H13.35a.803.803 0 00-.793.679l-1.049 6.65-.03.186a.805.805 0 01.794-.68h.5c3.238 0 5.774-1.314 6.514-5.12.22-1.15.18-2.11-.168-2.915-.053-.124-.107-.242-.17-.357l-.043-.214z"/></svg>
-      PayPal
-    </div>
-    <div class="logo-pill">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg>
-      MOCK
-    </div>
-    <div class="logo-pill">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      Redis
-    </div>
-    <div class="logo-pill">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-      Resilience4j
-    </div>
-    <div class="logo-pill">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#f89820" stroke-width="2" width="14" height="14"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-      Spring Boot
-    </div>
+    <p style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-3);text-align:center;">Escolha um gateway ou deixe o SmartRouter decidir — teste com MOCK sem credenciais reais</p>
   </div>
 </div>
 
@@ -1065,6 +1146,30 @@ footer{
     <h2 class="grid-heading">Tudo que você precisa para pagamentos</h2>
     <p class="grid-sub">Use um ou todos. Produtos best-of-breed, integrados como plataforma.</p>
 
+    <!-- Why use microblock -->
+    <div style="display:flex;flex-wrap:wrap;gap:0.6rem;margin-bottom:2.5rem;justify-content:center;">
+      <div style="display:flex;align-items:center;gap:0.4rem;padding:0.35rem 0.8rem;background:var(--bg-surface);border:1px solid var(--border);border-radius:100px;font-size:0.75rem;color:var(--text-2);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>
+        1 integração em vez de 3
+      </div>
+      <div style="display:flex;align-items:center;gap:0.4rem;padding:0.35rem 0.8rem;background:var(--bg-surface);border:1px solid var(--border);border-radius:100px;font-size:0.75rem;color:var(--text-2);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>
+        1 formato de webhook
+      </div>
+      <div style="display:flex;align-items:center;gap:0.4rem;padding:0.35rem 0.8rem;background:var(--bg-surface);border:1px solid var(--border);border-radius:100px;font-size:0.75rem;color:var(--text-2);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>
+        Fallback automático
+      </div>
+      <div style="display:flex;align-items:center;gap:0.4rem;padding:0.35rem 0.8rem;background:var(--bg-surface);border:1px solid var(--border);border-radius:100px;font-size:0.75rem;color:var(--text-2);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>
+        Teste local com MOCK
+      </div>
+      <div style="display:flex;align-items:center;gap:0.4rem;padding:0.35rem 0.8rem;background:var(--bg-surface);border:1px solid var(--border);border-radius:100px;font-size:0.75rem;color:var(--text-2);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>
+        Open source · MIT License
+      </div>
+    </div>
+
     <div class="bento">
 
       <!-- CELL 1: Payment Processing (span 2) -->
@@ -1073,7 +1178,7 @@ footer{
           <svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
         </div>
         <div class="bento-cell-title">Processamento de Pagamentos</div>
-        <div class="bento-cell-desc">Processe PIX, boleto e cartão em múltiplos gateways com uma única chamada. Roteamento automático e fallback embutido sem nenhuma configuração extra.</div>
+        <div class="bento-cell-desc">Uma única chamada para PIX, boleto e cartão em múltiplos gateways. Roteamento automático e fallback embutidos — sem configuração extra.</div>
         <div class="bento-illustration">
           <div class="anim-container">
             <!-- Payment flow SVG animation -->
@@ -1122,7 +1227,7 @@ footer{
           <svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
         </div>
         <div class="bento-cell-title">SmartRouter</div>
-        <div class="bento-cell-desc">Roteamento inteligente por moeda, método e valor. BRL + PIX → MercadoPago. USD + card → Stripe.</div>
+        <div class="bento-cell-desc">O gateway certo é escolhido automaticamente. BRL + PIX → MercadoPago. USD + cartão → Stripe. Sem if/else no seu código.</div>
         <div class="bento-illustration">
           <div class="anim-container" style="min-height:90px">
             <svg class="router-paths" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:220px;width:100%">
@@ -1166,7 +1271,7 @@ footer{
           <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
         </div>
         <div class="bento-cell-title">Idempotência</div>
-        <div class="bento-cell-desc">Chave UUID v4 + Redis TTL 24h. A mesma requisição nunca é processada duas vezes, mesmo com falhas de rede.</div>
+        <div class="bento-cell-desc">Evite pagamentos duplicados. Chave UUID v4 + Redis TTL 24h garantem que a mesma requisição nunca seja processada duas vezes.</div>
         <div class="bento-illustration">
           <div class="anim-container" style="min-height:80px">
             <svg viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:210px;width:100%">
@@ -1199,7 +1304,7 @@ footer{
           <svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
         </div>
         <div class="bento-cell-title">Circuit Breaker</div>
-        <div class="bento-cell-desc">Resilience4j por gateway. CLOSED → OPEN → HALF_OPEN automático. Fallback para gateway alternativo sem intervenção.</div>
+        <div class="bento-cell-desc">Falhas de um gateway não derrubam sua integração. Resilience4j faz o fallback automático: CLOSED → OPEN → HALF_OPEN por gateway.</div>
         <div class="bento-illustration">
           <div class="anim-container" style="min-height:80px">
             <svg viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:210px;width:100%">
@@ -1235,7 +1340,7 @@ footer{
           <svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
         </div>
         <div class="bento-cell-title">Webhooks Normalizados</div>
-        <div class="bento-cell-desc">Todos os eventos chegam no mesmo formato, independente do gateway. Stripe, MercadoPago ou PayPal — você implementa uma vez. Assinados com HMAC-SHA256 por tenant.</div>
+        <div class="bento-cell-desc">Implemente uma vez, receba de qualquer gateway. Stripe, MercadoPago ou PayPal chegam no mesmo formato. Assinados com HMAC-SHA256 por tenant.</div>
         <div class="bento-illustration">
           <div class="anim-container" style="min-height:90px">
             <svg viewBox="0 0 380 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:380px;width:100%">
@@ -1282,7 +1387,7 @@ footer{
           <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
         <div class="bento-cell-title">Segurança</div>
-        <div class="bento-cell-desc">AES-256-GCM para credenciais, SHA-256 para API keys, HMAC em webhooks e dados de cartão nunca armazenados.</div>
+        <div class="bento-cell-desc">Credenciais e chaves nunca expostas em texto puro. AES-256-GCM, SHA-256 e HMAC desde o primeiro deploy.</div>
         <div class="bento-illustration">
           <div class="anim-container" style="min-height:80px">
             <svg viewBox="0 0 200 90" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:210px;width:100%">
@@ -1356,6 +1461,10 @@ footer{
         <div class="code-block-header">
           <div class="code-block-dots"><span class="dot-red"></span><span class="dot-amber"></span><span class="dot-green"></span></div>
           <span class="code-block-lang">curl</span>
+          <button id="copyCodeBtn" onclick="copyCode()" style="margin-left:auto;display:flex;align-items:center;gap:0.3rem;background:none;border:1px solid var(--border);border-radius:var(--radius);padding:0.2rem 0.55rem;color:var(--text-3);font-family:var(--font-mono);font-size:0.6rem;cursor:pointer;transition:all 0.15s;" title="Copiar código">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copiar
+          </button>
         </div>
         <div class="code-block-body">
 <pre><span class="t-m">curl</span> <span class="t-k">-X</span> POST http://localhost:8080<span class="t-s">/v1/payments</span> <span class="t-p">\</span>
@@ -1403,6 +1512,7 @@ footer{
     <div class="compat-grid">
       <div class="compat-card">
         <div class="compat-card-name" style="color:#a78bfa;">STRIPE</div>
+        <div style="font-family:var(--font-mono);font-size:0.6rem;color:#60a5fa;margin-bottom:0.5rem;">Melhor para cartão internacional</div>
         <div class="compat-methods">
           <div class="compat-method"><span class="name">pix</span><span class="compat-na">—</span></div>
           <div class="compat-method"><span class="name">boleto</span><span class="compat-na">—</span></div>
@@ -1412,6 +1522,7 @@ footer{
       </div>
       <div class="compat-card">
         <div class="compat-card-name" style="color:#34d399;">MERCADO PAGO</div>
+        <div style="font-family:var(--font-mono);font-size:0.6rem;color:#34d399;margin-bottom:0.5rem;">Ideal para BRL · Melhor para PIX</div>
         <div class="compat-methods">
           <div class="compat-method"><span class="name">pix</span><span class="compat-check">✓</span></div>
           <div class="compat-method"><span class="name">boleto</span><span class="compat-check">✓</span></div>
@@ -1421,6 +1532,7 @@ footer{
       </div>
       <div class="compat-card">
         <div class="compat-card-name" style="color:#fbbf24;">PAYPAL <span class="tag tag-amber" style="font-size:0.55rem;vertical-align:middle;">Beta</span></div>
+        <div style="font-family:var(--font-mono);font-size:0.6rem;color:#fbbf24;margin-bottom:0.5rem;">Melhor para USD/EUR</div>
         <div class="compat-methods">
           <div class="compat-method"><span class="name">pix</span><span class="compat-na">—</span></div>
           <div class="compat-method"><span class="name">boleto</span><span class="compat-na">—</span></div>
@@ -1430,6 +1542,7 @@ footer{
       </div>
       <div class="compat-card">
         <div class="compat-card-name" style="color:#636363;">MOCK <span class="tag" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.08);color:#555;font-size:0.55rem;vertical-align:middle;">dev</span></div>
+        <div style="font-family:var(--font-mono);font-size:0.6rem;color:#636363;margin-bottom:0.5rem;">Teste sem credenciais reais</div>
         <div class="compat-methods">
           <div class="compat-method"><span class="name">pix</span><span class="compat-check">✓</span></div>
           <div class="compat-method"><span class="name">boleto</span><span class="compat-check">✓</span></div>
@@ -1450,18 +1563,18 @@ footer{
     <div class="security-grid">
       <div class="security-card">
         <div class="security-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-        <div class="security-card-title">API Key via SHA-256</div>
-        <div class="security-card-desc">O valor bruto da sua API key nunca é armazenado — apenas o hash SHA-256. Revogação instantânea sem downtime.</div>
+        <div class="security-card-title">A chave bruta não fica exposta</div>
+        <div class="security-card-desc">API keys armazenadas apenas como hash SHA-256. Mesmo com acesso ao banco, o valor real da chave não é recuperável. Revogação instantânea sem downtime.</div>
       </div>
       <div class="security-card">
         <div class="security-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-        <div class="security-card-title">AES-256-GCM</div>
-        <div class="security-card-desc">Credenciais de gateway criptografadas em repouso. Chave mestre injetada via variável de ambiente — nunca persistida no banco.</div>
+        <div class="security-card-title">Credenciais não ficam em texto puro</div>
+        <div class="security-card-desc">Chaves de gateway criptografadas com AES-256-GCM em repouso. A chave mestre é injetada via variável de ambiente — nunca persistida no banco.</div>
       </div>
       <div class="security-card">
         <div class="security-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
-        <div class="security-card-title">HMAC-SHA256 em Webhooks</div>
-        <div class="security-card-desc">Cada notificação é assinada com secret exclusivo por tenant. Verificação em tempo constante evita timing attacks.</div>
+        <div class="security-card-title">Assinatura evita webhook falsificado</div>
+        <div class="security-card-desc">Cada notificação é assinada com HMAC-SHA256 exclusivo por tenant. Verificação em tempo constante — sem risco de timing attack ou spoofing.</div>
       </div>
     </div>
   </div>
@@ -1475,9 +1588,9 @@ footer{
     <div class="cta-actions">
       <a href="docs/quickstart.html" class="btn btn-brand">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        Primeiros Passos
+        Começar em 3 minutos
       </a>
-      <a href="docs/index.html" class="btn btn-outline">Documentação completa</a>
+      <a href="docs/index.html" class="btn btn-outline">Ver API Reference</a>
       <a href="https://github.com/vitinh0z/orquestraio" target="_blank" class="btn btn-outline">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
         GitHub
@@ -1523,13 +1636,58 @@ function closeAllMenus(resetBackdrop = true) {
   });
   if (resetBackdrop) document.getElementById('navBackdrop').classList.remove('show');
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAllMenus(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeAllMenus(); closeMobile(); } });
 let lastScroll = 0;
 window.addEventListener('scroll', () => {
   if (activeMenu && Math.abs(window.scrollY - lastScroll) > 60) closeAllMenus();
   lastScroll = window.scrollY;
 });
-function toggleMobile() {}
+
+// ── Mobile drawer ────────────────────────────────────────────
+let mobileOpen = false;
+function toggleMobile() {
+  mobileOpen ? closeMobile() : openMobile();
+}
+function openMobile() {
+  mobileOpen = true;
+  document.getElementById('mobileDrawer').classList.add('open');
+  document.getElementById('mobileDrawer').setAttribute('aria-hidden','false');
+  document.getElementById('navHamburger').setAttribute('aria-expanded','true');
+  document.getElementById('hamburgerIcon').innerHTML = '<path d="M18 6 6 18M6 6l12 12"/>';
+  document.body.style.overflow = 'hidden';
+}
+function closeMobile() {
+  mobileOpen = false;
+  document.getElementById('mobileDrawer').classList.remove('open');
+  document.getElementById('mobileDrawer').setAttribute('aria-hidden','true');
+  document.getElementById('navHamburger').setAttribute('aria-expanded','false');
+  document.getElementById('hamburgerIcon').innerHTML = '<path d="M3 12h18M3 6h18M3 18h18"/>';
+  document.body.style.overflow = '';
+}
+
+// ── Copy code button ─────────────────────────────────────────
+function copyCode() {
+  const pre = document.querySelector('.code-block-body pre');
+  const text = pre ? pre.textContent : '';
+  const btn = document.getElementById('copyCodeBtn');
+  navigator.clipboard.writeText(text).then(() => {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;"><polyline points="20 6 9 17 4 12"/></svg> Copiado!';
+    btn.style.color = 'var(--emerald)';
+    btn.style.borderColor = 'rgba(52,211,153,0.3)';
+    setTimeout(() => {
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 2000);
+  }).catch(() => {
+    btn.innerHTML = 'Selecione manualmente';
+    btn.style.color = 'var(--amber)';
+    setTimeout(() => {
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar';
+      btn.style.color = '';
+    }, 2500);
+  });
+}
 
 // Progress bar on scroll
 const progress = document.createElement('div');
